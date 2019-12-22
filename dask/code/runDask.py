@@ -11,6 +11,7 @@ import subprocess
 import socket
 
 import glob
+import dask
 import pandas as pd
 import dask.dataframe as dd
 
@@ -25,7 +26,7 @@ def run_batch():
         time.sleep(5)
     
     print('\ngetting client...')
-    c = Client(f'tcp://{run.get_metrics()["scheduler"]}')
+    c = Client(f'localhost:8786')
     print(c)
 
     print('getting files...')
@@ -38,13 +39,16 @@ def run_batch():
 
     t1 = time.time()
 
-    print('profiling data...')
-    desc = df.describe().compute()
-    print(desc)
+    for i in range(20):
+        print(f'profiling data for {i}th time...')
+        desc = df.describe().compute()
+        print(desc)
 
     t2 = time.time()
 
     run.log('duration', t2 - t1)
+    
+    c.shutdown()
 
     return 0
 
@@ -131,13 +135,16 @@ if __name__ == '__main__':
 
         if(args.batch):
 
-            run_batch()
+            try:
+                run_batch()
+            except:
+                pass
             
             print('killing scheduler, worker and jupyter')
             #jupyter_proc.kill()
             scheduler_proc.kill()
             worker_proc.kill()
-            exit(exit_code)
+            exit(0)
         else:
             flush(scheduler_proc, scheduler_log)
     else:
