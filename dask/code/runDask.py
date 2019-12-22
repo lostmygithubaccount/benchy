@@ -18,12 +18,15 @@ from notebook.notebookapp import list_running_servers
 
 def run_batch():
     
-    print('getting client...')
-    c = Client(f'tcp://{run.get_metrics()['scheduler']}')
-    print(c)
-    
-    
     run = Run.get_context()
+    
+    while 'scheduler' not in run.get_metrics() and run.get_status() != 'Canceled':
+        print('waiting...')
+        time.sleep(5)
+    
+    print('\ngetting client...')
+    c = Client(f'tcp://{run.get_metrics()["scheduler"]}')
+    print(c)
 
     print('getting files...')
     files = glob.glob('/tmp/noaa/**/*.parquet', recursive=True)
